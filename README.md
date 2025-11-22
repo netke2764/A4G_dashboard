@@ -1,11 +1,11 @@
 Admin Portal
 Overview
 
-Admin portal conference registrations ko view, filter, aur analyze karne ke liye banaya gaya hai. Yeh backend database se real-time data fetch karta hai aur dashboard pe clean UI ke saath display karta hai.
+The Admin Portal allows administrators to view, filter, and analyze all conference registrations. It connects to the backend database and displays the data in a structured dashboard.
 
 Live URL
 
-Admin Portal: <PLACE YOUR LIVE URL HERE>
+Admin Portal: <ADD LIVE URL HERE>
 
 Features
 
@@ -15,54 +15,41 @@ Student registrations count
 
 Professional registrations count
 
-Full table with all submissions
+Complete table of all registrations
 
 Filter by: All / Student / Professional
 
-Sort by latest registration date
+Sort by newest registration date
 
 Tech Stack
 
-Frontend: React / Vite / Tailwind (replace if different)
+Frontend: React / Vite / Tailwind
 
 Backend: Node.js + Express
 
-Database: PostgreSQL (replace if different)
+Database: PostgreSQL
+
+(Replace with what you actually used.)
 
 Pages
-1. Dashboard
+Dashboard
 
-Quick stats cards
+Displays total counts
 
-Auto-refreshing numbers
+Real-time data from API
 
-2. Registrations Table
+Registrations Table
 
-Columns:
+Columns: Name, Email, Type, Company, Phone, Registration Date
 
-Name
+Filter and sorting options included
 
-Email
-
-Type
-
-Company (professional only)
-
-Phone
-
-Registration Date
-
-Filter + sort integrated
-
-API Integration
-
-Portal backend se data fetch karta hai using:
-
-Method	Endpoint	Description
-GET	/api/stats	Dashboard counts
+API Endpoints Used
+Method	Endpoint	Purpose
+GET	/api/stats	Fetch counts for dashboard
 GET	/api/registrations	Fetch all registrations
 
-(Agar tumhare endpoints alag hai toh replace kar dena.)
+(Adjust if your routes differ.)
 
 Local Setup
 cd admin-portal
