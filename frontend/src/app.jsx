@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart3, Users, Briefcase, GraduationCap, Search, Menu, X, LogOut, Settings, Home, TrendingUp, Calendar } from 'lucide-react';
 
-const API_URL = 'http://localhost:3000/api';
+// CHANGE THIS after deployment
+const API_URL = 'https://a4g-conference-registration-cvjx.onrender.com/api';
 
 const App = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -25,22 +26,28 @@ const App = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [countsRes, regsRes] = await Promise.all([
-        fetch(`${API_URL}/counts`),
-        fetch(`${API_URL}/registrations?sort=${sortOrder}`)
-      ]);
-      
-      const counts = await countsRes.json();
-      const regs = await regsRes.json();
-      
+      const res = await fetch(`${API_URL}/registrations`);
+      const json = await res.json();
+
+      const list = json.data || [];
+
+      // Local Stats
       setStats({
-        total: counts.total || 0,
-        students: counts.students || 0,
-        professionals: counts.professionals || 0
+        total: list.length,
+        students: list.filter(r => r.registration_type === "student").length,
+        professionals: list.filter(r => r.registration_type === "professional").length
       });
-      setRegistrations(regs.data || []);
-    } catch (error) {
-      console.error('Error fetching data:', error);
+
+      // Local sorting
+      const sortedList = [...list].sort((a, b) => {
+        return sortOrder === 'asc'
+          ? new Date(a.created_at) - new Date(b.created_at)
+          : new Date(b.created_at) - new Date(a.created_at);
+      });
+
+      setRegistrations(sortedList);
+    } catch (err) {
+      console.error("Error fetching data:", err);
     } finally {
       setLoading(false);
     }
@@ -48,11 +55,11 @@ const App = () => {
 
   const filterAndSearch = () => {
     let filtered = [...registrations];
-    
+
     if (filter !== 'all') {
       filtered = filtered.filter(reg => reg.registration_type === filter);
     }
-    
+
     if (searchQuery) {
       filtered = filtered.filter(reg =>
         reg.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -60,7 +67,7 @@ const App = () => {
         (reg.company && reg.company.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     }
-    
+
     setFilteredData(filtered);
   };
 
@@ -73,12 +80,6 @@ const App = () => {
           <h3 className="text-5xl font-black text-white mb-1 group-hover:scale-105 transition-transform duration-300">
             {loading ? '...' : value.toLocaleString()}
           </h3>
-          {trend && (
-            <div className="flex items-center gap-1 mt-2">
-              <TrendingUp size={14} className="text-green-500" />
-              <span className="text-green-500 text-sm font-medium">{trend}</span>
-            </div>
-          )}
         </div>
         <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${color} flex items-center justify-center opacity-90 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300`}>
           <Icon size={40} className="text-white" />
@@ -89,20 +90,17 @@ const App = () => {
 
   const Sidebar = () => (
     <>
-      {/* Mobile Overlay */}
       {sidebarOpen && (
-        <div 
+        <div
           className="lg:hidden fixed inset-0 bg-black/80 z-40 backdrop-blur-sm"
           onClick={() => setSidebarOpen(false)}
         />
       )}
-      
-      {/* Sidebar */}
+
       <aside className={`fixed top-0 left-0 h-full bg-black border-r border-gray-900 z-50 transition-all duration-300 ${
         sidebarOpen ? 'w-64' : 'w-0 lg:w-20'
       }`}>
         <div className="flex flex-col h-full">
-          {/* Logo */}
           <div className="p-6 border-b border-gray-900">
             <h1 className={`text-red-600 font-black text-3xl tracking-tighter transition-opacity ${
               sidebarOpen ? 'opacity-100' : 'opacity-0 lg:opacity-0'
@@ -111,7 +109,6 @@ const App = () => {
             </h1>
           </div>
 
-          {/* Navigation */}
           <nav className="flex-1 p-4 space-y-2">
             {[
               { icon: Home, label: 'Dashboard', view: 'dashboard' },
@@ -137,7 +134,6 @@ const App = () => {
             ))}
           </nav>
 
-          {/* Logout */}
           <div className="p-4 border-t border-gray-900">
             <button className="w-full flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:bg-red-900/20 hover:text-red-500 transition-all">
               <LogOut size={22} />
@@ -155,7 +151,6 @@ const App = () => {
 
   const DashboardView = () => (
     <div className="space-y-8 animate-fadeIn">
-      {/* Welcome Banner */}
       <div className="bg-gradient-to-r from-red-900/30 via-red-950/20 to-black rounded-lg border border-red-900/50 p-8">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
@@ -169,32 +164,27 @@ const App = () => {
         </div>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard
           title="Total Registrations"
           value={stats.total}
           icon={BarChart3}
           color="from-red-600 to-red-800"
-          trend="+12% from last week"
         />
         <StatCard
           title="Students"
           value={stats.students}
           icon={GraduationCap}
           color="from-blue-600 to-blue-800"
-          trend="+8% from last week"
         />
         <StatCard
           title="Professionals"
           value={stats.professionals}
           icon={Briefcase}
           color="from-purple-600 to-purple-800"
-          trend="+15% from last week"
         />
       </div>
 
-      {/* Recent Activity */}
       <div className="bg-gradient-to-br from-gray-900 to-black rounded-lg border border-gray-800 p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-3xl font-black text-white">Recent Registrations</h2>
@@ -205,6 +195,7 @@ const App = () => {
             View All Users
           </button>
         </div>
+
         <div className="space-y-3">
           {loading ? (
             <div className="text-center py-12 text-gray-500">Loading recent registrations...</div>
@@ -242,62 +233,12 @@ const App = () => {
           )}
         </div>
       </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-gradient-to-br from-gray-900 to-black rounded-lg border border-gray-800 p-6">
-          <h3 className="text-xl font-bold text-white mb-4">Registration Breakdown</h3>
-          <div className="space-y-4">
-            <div>
-              <div className="flex justify-between mb-2">
-                <span className="text-gray-400">Students</span>
-                <span className="text-white font-bold">{stats.total > 0 ? Math.round((stats.students / stats.total) * 100) : 0}%</span>
-              </div>
-              <div className="w-full h-3 bg-gray-800 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full transition-all duration-1000"
-                  style={{ width: `${stats.total > 0 ? (stats.students / stats.total) * 100 : 0}%` }}
-                ></div>
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between mb-2">
-                <span className="text-gray-400">Professionals</span>
-                <span className="text-white font-bold">{stats.total > 0 ? Math.round((stats.professionals / stats.total) * 100) : 0}%</span>
-              </div>
-              <div className="w-full h-3 bg-gray-800 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full transition-all duration-1000"
-                  style={{ width: `${stats.total > 0 ? (stats.professionals / stats.total) * 100 : 0}%` }}
-                ></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-gray-900 to-black rounded-lg border border-gray-800 p-6">
-          <h3 className="text-xl font-bold text-white mb-4">Quick Actions</h3>
-          <div className="space-y-3">
-            <button className="w-full text-left px-4 py-3 bg-black/50 border border-gray-800 rounded-lg hover:border-red-900 hover:bg-red-900/10 transition-all text-white font-medium">
-              Export All Data
-            </button>
-            <button className="w-full text-left px-4 py-3 bg-black/50 border border-gray-800 rounded-lg hover:border-red-900 hover:bg-red-900/10 transition-all text-white font-medium">
-              Send Email Notification
-            </button>
-            <button className="w-full text-left px-4 py-3 bg-black/50 border border-gray-800 rounded-lg hover:border-red-900 hover:bg-red-900/10 transition-all text-white font-medium">
-              Generate Report
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 
   const UsersView = () => (
     <div className="space-y-6 animate-fadeIn">
-      {/* Controls */}
       <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-        {/* Search */}
         <div className="relative w-full lg:w-96">
           <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500" size={20} />
           <input
@@ -309,7 +250,6 @@ const App = () => {
           />
         </div>
 
-        {/* Filters */}
         <div className="flex gap-2">
           {['all', 'student', 'professional'].map((type) => (
             <button
@@ -327,7 +267,6 @@ const App = () => {
         </div>
       </div>
 
-      {/* Table */}
       <div className="bg-gradient-to-br from-gray-900 to-black rounded-lg border border-gray-800 overflow-hidden shadow-2xl">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -338,12 +277,15 @@ const App = () => {
                 <th className="text-left px-6 py-4 text-red-500 font-black uppercase text-sm tracking-wider">Type</th>
                 <th className="text-left px-6 py-4 text-red-500 font-black uppercase text-sm tracking-wider">Company</th>
                 <th className="text-left px-6 py-4 text-red-500 font-black uppercase text-sm tracking-wider">Phone</th>
-                <th className="text-left px-6 py-4 text-red-500 font-black uppercase text-sm tracking-wider cursor-pointer hover:text-red-400 transition-colors"
-                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
+                <th
+                  className="text-left px-6 py-4 text-red-500 font-black uppercase text-sm tracking-wider cursor-pointer hover:text-red-400 transition-colors"
+                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                >
                   Date {sortOrder === 'asc' ? '↑' : '↓'}
                 </th>
               </tr>
             </thead>
+
             <tbody>
               {loading ? (
                 <tr>
@@ -396,7 +338,6 @@ const App = () => {
         </div>
       </div>
 
-      {/* Results Count */}
       <div className="flex justify-between items-center text-gray-400">
         <span>Showing {filteredData.length} of {registrations.length} users</span>
         <button
@@ -428,9 +369,7 @@ const App = () => {
     <div className="min-h-screen bg-black">
       <Sidebar />
 
-      {/* Main Content */}
       <div className={`transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
-        {/* Header */}
         <header className="bg-black/50 backdrop-blur-sm border-b border-gray-900 sticky top-0 z-30">
           <div className="flex items-center justify-between p-6">
             <div className="flex items-center gap-4">
@@ -455,7 +394,6 @@ const App = () => {
           </div>
         </header>
 
-        {/* Content */}
         <main className="p-6 lg:p-8">
           {activeView === 'dashboard' && <DashboardView />}
           {activeView === 'users' && <UsersView />}
